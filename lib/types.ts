@@ -27,6 +27,7 @@ export interface SignalMsg {
 }
 
 export interface PollResponse {
+  alive: boolean;
   peers: PeerDot[];
   signals: SignalMsg[];
 }

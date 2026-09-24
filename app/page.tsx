@@ -51,6 +51,8 @@ export default function Home() {
   const peerRef = useRef<PeerSession | null>(null);
   const msgId = useRef(0);
   const requestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const myLocationRef = useRef(myLocation);
+  myLocationRef.current = myLocation;
 
   function showNotice(text: string) {
     setNotice(text);
@@ -83,6 +85,10 @@ export default function Home() {
       onRemoteStream: (stream) => setRemoteStream(stream),
       onConnectionState: (state) => {
         if (state === "failed") {
+          const c = connRef.current;
+          if (c.kind === "connecting" || c.kind === "connected") {
+            void sendSignal(sessionId, c.peerId, "end");
+          }
           teardown("Connection failed (network).");
         }
       },
@@ -279,6 +285,14 @@ export default function Home() {
       try {
         const data = await poll(sessionId);
         if (!active) return;
+        if (!data.alive && myLocationRef.current) {
+          await join(
+            sessionId,
+            myLocationRef.current.lat,
+            myLocationRef.current.lng,
+          );
+          if (!active) return;
+        }
         setPeers(data.peers);
         for (const s of data.signals) processSignalRef.current(s);
       } catch {}
@@ -294,7 +308,13 @@ export default function Home() {
 
   useEffect(() => {
     if (!sessionId || phase !== "live") return;
-    const onLeave = () => leave(sessionId);
+    const onLeave = () => {
+      const c = connRef.current;
+      if (c.kind !== "idle") {
+        void sendSignal(sessionId, c.peerId, "end");
+      }
+      leave(sessionId);
+    };
     window.addEventListener("pagehide", onLeave);
     window.addEventListener("beforeunload", onLeave);
     return () => {

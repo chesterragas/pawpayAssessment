@@ -21,9 +21,10 @@ export async function GET(request: NextRequest) {
   const staleCutoff = new Date(now - STALE_MS);
   const signalCutoff = new Date(now - SIGNAL_TTL_MS);
 
-  // 1) Heartbeat — refresh lastSeen for the caller.
-  await prisma.presence.updateMany({
-    where: {},
+  // 1) Heartbeat — refresh lastSeen for the caller only. Updating every row
+  // would keep abandoned dots "online" forever as long as anyone is polling.
+  const heartbeat = await prisma.presence.updateMany({
+    where: { id },
     data: { lastSeen: new Date(now) },
   });
 
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
   }
 
   const response: PollResponse = {
+    alive: heartbeat.count > 0,
     peers: peers.map((p) => ({
       id: p.id,
       lat: p.lat,
