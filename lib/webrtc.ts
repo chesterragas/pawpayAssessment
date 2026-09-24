@@ -81,7 +81,7 @@ export class PeerSession {
           (msg.t === "chat" || msg.t === "msg") &&
           typeof msg.text === "string"
         ) {
-          this.cb.onChat(msg.text);
+          this.cb.onChat(msg.text.slice(0, 2000));
         } else if (msg.t === "ctrl" && typeof msg.ctrl === "string") {
           this.cb.onControl(msg.ctrl as PeerControl);
         }
@@ -133,7 +133,9 @@ export class PeerSession {
   }
 
   sendChat(text: string) {
-    this.safeSend({ t: "chat", text });
+    const trimmed = text.slice(0, 2000);
+    if (!trimmed) return;
+    this.safeSend({ t: "chat", text: trimmed });
   }
 
   sendControl(ctrl: PeerControl) {

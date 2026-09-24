@@ -1,33 +1,32 @@
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { forbiddenOrigin, isAllowedOrigin } from "@/lib/origin";
+import { isSession, readBodyToken, requireSession } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// POST /api/leave — body { id }. Removes the presence row and any pending
-// signals to/from this user. Called via navigator.sendBeacon on tab close, so
-// the body may arrive as text — parse defensively.
+// POST /api/leave — Bearer token, or { token } in the body for sendBeacon
+// (which cannot set Authorization). Removes this session's presence row and
+// inbound mailbox. Outbound signals stay so a tab-close `end` can still land.
 export async function POST(request: NextRequest) {
-  let id: string | undefined;
+  if (!isAllowedOrigin(request)) return forbiddenOrigin();
+
+  let body: unknown = null;
   try {
     const text = await request.text();
-    id = text ? (JSON.parse(text)?.id as string | undefined) : undefined;
+    body = text ? JSON.parse(text) : null;
   } catch {
-    id = undefined;
+    body = null;
   }
 
-  if (typeof id !== "string" || !id) {
-    return Response.json({ error: "invalid id" }, { status: 400 });
-  }
+  const session = await requireSession(request, readBodyToken(body));
+  if (!isSession(session)) return session;
 
-  // Independent cleanup deletes — no atomicity needed (and interactive
-  // transactions are unreliable over a PgBouncer pooler).
-  // Keep outbound mailbox rows (fromId) so a tab-close `end` can still
-  // reach the other peer.
   await prisma.signal.deleteMany({
-    where: { toId: id },
+    where: { toId: session.id },
   });
-  await prisma.presence.deleteMany({ where: { id } });
+  await prisma.presence.deleteMany({ where: { id: session.id } });
 
   return Response.json({ ok: true });
 }

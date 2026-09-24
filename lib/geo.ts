@@ -5,12 +5,18 @@
 
 const KM_PER_DEG_LAT = 111.32;
 
+function randomUnit(): number {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0]! / 2 ** 32;
+}
+
 export function applyPrivacyOffset(
   lat: number,
   lng: number,
 ): { lat: number; lng: number } {
-  const distanceKm = 1 + Math.random() * 2; // 1–3 km
-  const bearing = Math.random() * 2 * Math.PI; // random direction
+  const distanceKm = 1 + randomUnit() * 2; // 1–3 km
+  const bearing = randomUnit() * 2 * Math.PI; // random direction
 
   const dLat = (distanceKm * Math.cos(bearing)) / KM_PER_DEG_LAT;
   const latRad = (lat * Math.PI) / 180;
