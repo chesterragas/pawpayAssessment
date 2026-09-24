@@ -398,3 +398,301 @@ body {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
+
+/* ---------- Shared Pulse ---------- */
+
+.pulse-button {
+  --button-glow: 12px;
+  --button-scale: 1.006;
+  --beat-duration: 0.68s;
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 9999px;
+  background: linear-gradient(
+    110deg,
+    rgba(14, 30, 52, 0.9),
+    rgba(12, 38, 55, 0.75)
+  );
+  color: #bae6fd;
+  font-size: 0.75rem;
+  font-weight: 600;
+  touch-action: none;
+  user-select: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.pulse-button:not(:disabled):hover {
+  border-color: rgba(125, 211, 252, 0.52);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.12);
+}
+
+.pulse-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.pulse-button--level-2 {
+  --button-glow: 24px;
+  --button-scale: 1.012;
+  --beat-duration: 0.56s;
+}
+
+.pulse-button--level-3 {
+  --button-glow: 36px;
+  --button-scale: 1.018;
+  --beat-duration: 0.44s;
+}
+
+.pulse-button--charging {
+  border-color: rgba(125, 211, 252, 0.75);
+  box-shadow:
+    0 0 var(--button-glow) rgba(56, 189, 248, 0.28),
+    inset 0 0 var(--button-glow) rgba(56, 189, 248, 0.12);
+  transform: scale(var(--button-scale));
+}
+
+.pulse-button-heart {
+  color: #38bdf8;
+  font-size: 1rem;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.75);
+}
+
+.pulse-button--charging .pulse-button-heart {
+  animation: shared-heartbeat var(--beat-duration) ease-in-out infinite;
+}
+
+.pulse-button-meter {
+  display: inline-flex;
+  align-items: end;
+  gap: 2px;
+  height: 10px;
+}
+
+.pulse-button-meter span {
+  width: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(125, 211, 252, 0.22);
+}
+
+.pulse-button-meter span:nth-child(2) {
+  height: 7px;
+}
+
+.pulse-button-meter span:nth-child(3) {
+  height: 10px;
+}
+
+.pulse-button--charging .pulse-button-meter span:nth-child(1),
+.pulse-button--level-2.pulse-button--charging
+  .pulse-button-meter
+  span:nth-child(2),
+.pulse-button--level-3.pulse-button--charging .pulse-button-meter span {
+  background: #7dd3fc;
+  box-shadow: 0 0 7px rgba(125, 211, 252, 0.65);
+}
+
+.shared-pulse {
+  --pulse-alpha: 0.035;
+  --pulse-duration: 1.6s;
+  --pulse-scale: 2.75;
+  --pulse-glow: 22px;
+  position: fixed;
+  z-index: 35;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shared-pulse--strength-2 {
+  --pulse-alpha: 0.07;
+  --pulse-duration: 1.8s;
+  --pulse-scale: 3.3;
+  --pulse-glow: 44px;
+}
+
+.shared-pulse--strength-3 {
+  --pulse-alpha: 0.105;
+  --pulse-duration: 2s;
+  --pulse-scale: 3.85;
+  --pulse-glow: 66px;
+}
+
+.shared-pulse::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(56, 189, 248, var(--pulse-alpha)) 0%,
+    transparent 60%
+  );
+  animation: shared-flash 2.4s ease-out both;
+}
+
+.shared-pulse-ring {
+  position: absolute;
+  width: min(34vw, 260px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(125, 211, 252, 0.7);
+  border-radius: 9999px;
+  box-shadow:
+    0 0 30px rgba(56, 189, 248, 0.22),
+    inset 0 0 24px rgba(56, 189, 248, 0.12);
+  opacity: 0;
+  animation: shared-wave var(--pulse-duration) ease-out both;
+}
+
+.shared-pulse-ring--two {
+  animation-delay: 180ms;
+}
+
+.shared-pulse-ring--three {
+  animation-delay: 360ms;
+}
+
+.shared-pulse-core {
+  position: relative;
+  display: grid;
+  width: 64px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(186, 230, 253, 0.42);
+  border-radius: 9999px;
+  background: rgba(5, 20, 36, 0.88);
+  color: #7dd3fc;
+  font-size: 1.5rem;
+  box-shadow:
+    0 0 var(--pulse-glow) rgba(56, 189, 248, 0.48),
+    inset 0 0 18px rgba(56, 189, 248, 0.13);
+  animation: shared-core 2.1s ease-out both;
+}
+
+.shared-pulse--theirs .shared-pulse-core {
+  color: #a7f3d0;
+  box-shadow:
+    0 0 var(--pulse-glow) rgba(52, 211, 153, 0.48),
+    inset 0 0 18px rgba(52, 211, 153, 0.13);
+}
+
+.shared-pulse-label {
+  position: absolute;
+  top: calc(50% + 52px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  background: rgba(3, 7, 18, 0.78);
+  padding: 0.4rem 0.75rem;
+  color: #dbeafe;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+  animation: shared-label 2.2s ease-out both;
+}
+
+@keyframes shared-heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  18% {
+    transform: scale(1.35);
+  }
+  36% {
+    transform: scale(1.05);
+  }
+  52% {
+    transform: scale(1.22);
+  }
+}
+
+@keyframes shared-wave {
+  0% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+  18% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(var(--pulse-scale));
+  }
+}
+
+@keyframes shared-core {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  32% {
+    transform: scale(0.92);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes shared-label {
+  0%,
+  12% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  25%,
+  70% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes shared-flash {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-button--charging .pulse-button-heart {
+    animation: none;
+  }
+
+  .shared-pulse::before,
+  .shared-pulse-ring {
+    display: none;
+  }
+
+  .shared-pulse-core,
+  .shared-pulse-label {
+    animation-duration: 1.6s;
+  }
+}

@@ -43,4 +43,20 @@ Ranked by “what can a stranger do with only a public map id.”
 
 ## Phase 4 — Make it better
 
-Not started yet.
+### Shared Pulse
+
+Anonymous chat has an awkward first second: both people connected, neither knows
+what to say. I added a wordless, ephemeral way to acknowledge the person on the
+other side.
+
+- **Hold to send.** A new control in chat charges through three strengths. Release
+  to send a pulse; a short hold is a tap, a longer hold makes a larger wave.
+- **Felt on both sides.** The sender and recipient see concentric light travel
+  across the map; supported devices give the recipient a matching haptic rhythm.
+- **Private by construction.** Pulses use the existing WebRTC data channel. They
+  never touch the API or database and disappear after 2.6 seconds.
+- **Accessible.** The control works with pointer, touch, Space, and Enter, has a
+  reduced-motion version, and does not require sound.
+
+With more time I would let two people tap a short rhythm and replay the combined
+pattern—a tiny shared ritual without adding identity or history.

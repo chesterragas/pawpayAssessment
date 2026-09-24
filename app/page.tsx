@@ -6,9 +6,15 @@ import WorldMap from "./components/WorldMap";
 import ConnectionPrompt from "./components/ConnectionPrompt";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import MeetingArt from "./components/MeetingArt";
+import PulseWave, { type PulseEvent } from "./components/PulseWave";
 import VideoPanel from "./components/VideoPanel";
 import { join, leave, poll, sendSignal } from "@/lib/api";
-import { PeerSession, type DescType, type PeerControl } from "@/lib/webrtc";
+import {
+  PeerSession,
+  type DescType,
+  type PeerControl,
+  type PulseStrength,
+} from "@/lib/webrtc";
 import { POLL_INTERVAL_MS } from "@/lib/presence";
 import { type PeerDot, type SignalMsg } from "@/lib/types";
 
@@ -28,6 +34,7 @@ export default function Home() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [peers, setPeers] = useState<PeerDot[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [pulseEvent, setPulseEvent] = useState<PulseEvent | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -51,6 +58,7 @@ export default function Home() {
 
   const peerRef = useRef<PeerSession | null>(null);
   const msgId = useRef(0);
+  const pulseId = useRef(0);
   const requestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const myLocationRef = useRef(myLocation);
   useEffect(() => {
@@ -66,6 +74,19 @@ export default function Home() {
     setMessages((prev) => [...prev, { id: msgId.current++, mine, text }]);
   }
 
+  function showPulse(mine: boolean, strength: PulseStrength) {
+    const id = pulseId.current++;
+    setPulseEvent({ id, mine, strength });
+    window.setTimeout(() => {
+      setPulseEvent((current) => (current?.id === id ? null : current));
+    }, 2_600);
+    if (!mine && "vibrate" in navigator) {
+      navigator.vibrate(
+        strength === 3 ? [45, 60, 45, 60, 90] : strength === 2 ? [45, 55, 65] : 45,
+      );
+    }
+  }
+
   function teardown(message?: string) {
     if (requestTimer.current) clearTimeout(requestTimer.current);
     peerRef.current?.close();
@@ -74,6 +95,7 @@ export default function Home() {
     setRemoteStream(null);
     setVideo("none");
     setMessages([]);
+    setPulseEvent(null);
     setConn({ kind: "idle" });
     if (message) showNotice(message);
   }
@@ -84,6 +106,7 @@ export default function Home() {
         void sendSignal(peerId, type, payload);
       },
       onChat: (text) => addMessage(false, text),
+      onPulse: (strength) => showPulse(false, strength),
       onControl: (ctrl) => handleControl(ctrl),
       onRemoteStream: (stream) => setRemoteStream(stream),
       onConnectionState: (state) => {
@@ -362,6 +385,8 @@ export default function Home() {
         canConnect={conn.kind === "idle"}
       />
 
+      {pulseEvent && <PulseWave key={pulseEvent.id} event={pulseEvent} />}
+
       {notice && (
         <div className="absolute left-1/2 top-20 z-30 -translate-x-1/2 rounded-full bg-zinc-800/90 px-4 py-2 text-sm text-zinc-100 shadow-lg backdrop-blur">
           {notice}
@@ -408,6 +433,10 @@ export default function Home() {
           onSend={(text) => {
             peerRef.current?.sendChat(text);
             addMessage(true, text);
+          }}
+          onSendPulse={(strength) => {
+            peerRef.current?.sendPulse(strength);
+            showPulse(true, strength);
           }}
           onStartVideo={startVideoRequest}
           onEnd={endConnection}

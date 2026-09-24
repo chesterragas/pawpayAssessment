@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { PulseStrength } from "@/lib/webrtc";
 
 export interface ChatMessage {
   id: number;
@@ -13,6 +14,7 @@ export default function ChatPanel({
   connected,
   videoBusy,
   onSend,
+  onSendPulse,
   onStartVideo,
   onEnd,
 }: {
@@ -20,11 +22,17 @@ export default function ChatPanel({
   connected: boolean;
   videoBusy: boolean;
   onSend: (text: string) => void;
+  onSendPulse: (strength: PulseStrength) => void;
   onStartVideo: () => void;
   onEnd: () => void;
 }) {
   const [draft, setDraft] = useState("");
+  const [charging, setCharging] = useState(false);
+  const [charge, setCharge] = useState<PulseStrength>(1);
   const endRef = useRef<HTMLDivElement>(null);
+  const holdStartedAt = useRef(0);
+  const chargingRef = useRef(false);
+  const chargeTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,6 +45,37 @@ export default function ChatPanel({
     onSend(text);
     setDraft("");
   }
+
+  function startPulse() {
+    if (!connected || chargingRef.current) return;
+    holdStartedAt.current = performance.now();
+    chargingRef.current = true;
+    setCharge(1);
+    setCharging(true);
+    chargeTimer.current = setInterval(() => {
+      const heldFor = performance.now() - holdStartedAt.current;
+      setCharge(heldFor >= 1_200 ? 3 : heldFor >= 500 ? 2 : 1);
+    }, 100);
+  }
+
+  function releasePulse() {
+    if (!chargingRef.current) return;
+    chargingRef.current = false;
+    if (chargeTimer.current) clearInterval(chargeTimer.current);
+    chargeTimer.current = null;
+    const heldFor = performance.now() - holdStartedAt.current;
+    const strength: PulseStrength = heldFor >= 1_200 ? 3 : heldFor >= 500 ? 2 : 1;
+    setCharging(false);
+    setCharge(1);
+    onSendPulse(strength);
+  }
+
+  useEffect(
+    () => () => {
+      if (chargeTimer.current) clearInterval(chargeTimer.current);
+    },
+    [],
+  );
 
   return (
     <div className="absolute inset-y-0 right-0 z-20 flex w-full max-w-md flex-col border-l border-zinc-800 bg-zinc-950 text-zinc-100 shadow-2xl">
@@ -66,9 +105,14 @@ export default function ChatPanel({
 
       <div className="flex-1 space-y-2 overflow-y-auto p-4">
         {messages.length === 0 && (
-          <p className="mt-8 text-center text-sm text-zinc-500">
-            Say hello. Messages are peer-to-peer and never stored.
-          </p>
+          <div className="mt-8 text-center">
+            <p className="text-sm text-zinc-500">
+              Say hello, or send a pulse before you find the words.
+            </p>
+            <p className="mt-1 text-xs text-zinc-700">
+              Everything here is peer-to-peer and never stored.
+            </p>
+          </div>
         )}
         {messages.map((m) => (
           <div
@@ -87,6 +131,43 @@ export default function ChatPanel({
           </div>
         ))}
         <div ref={endRef} />
+      </div>
+
+      <div className="border-t border-zinc-800/80 px-3 pt-3">
+        <button
+          type="button"
+          className={`pulse-button pulse-button--level-${charge} ${
+            charging ? "pulse-button--charging" : ""
+          }`}
+          disabled={!connected}
+          aria-label="Hold to send a pulse"
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            startPulse();
+          }}
+          onPointerUp={releasePulse}
+          onPointerCancel={releasePulse}
+          onKeyDown={(event) => {
+            if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+              event.preventDefault();
+              startPulse();
+            }
+          }}
+          onKeyUp={(event) => {
+            if (event.key === " " || event.key === "Enter") {
+              event.preventDefault();
+              releasePulse();
+            }
+          }}
+        >
+          <span className="pulse-button-heart">♥</span>
+          <span>{charging ? "Let go to send" : "Hold to send a pulse"}</span>
+          <span className="pulse-button-meter" aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
       </div>
 
       <form onSubmit={submit} className="flex gap-2 border-t border-zinc-800 p-3">
