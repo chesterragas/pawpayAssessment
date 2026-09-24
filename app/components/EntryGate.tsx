@@ -40,28 +40,65 @@ export default function EntryGate({
     );
   }
 
+  const locating = status === "locating";
+
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-8 bg-zinc-950 p-6 text-zinc-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight">Pulse</h1>
-        <p className="mt-2 max-w-sm text-zinc-400">
-          A living globe of anonymous strangers. Drop onto the map and connect.
+    <div className="entry-shell relative flex min-h-full flex-1 flex-col items-center justify-center overflow-hidden p-6 text-zinc-100">
+      <div className="entry-aurora" aria-hidden />
+
+      <div className="relative flex flex-col items-center">
+        <p className="entry-eyebrow">Live now · worldwide</p>
+
+        <div className="entry-globe" aria-hidden>
+          <span className="entry-glow" />
+          <span className="entry-ring" />
+          <span className="entry-ring entry-ring--late" />
+          {/* The clip wrapper carries the blend + circular crop: Chromium
+              ignores a mask applied directly to a composited video layer. */}
+          <span className="entry-globe-clip">
+            <video
+              className="entry-globe-media"
+              src="/earth-globe.mp4"
+              poster="/earth-globe.jpg"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+            />
+            {/* Shown instead of the video when the user prefers reduced motion. */}
+            <span className="entry-globe-media entry-globe-still" />
+          </span>
+        </div>
+
+        <div className="-mt-2 text-center sm:-mt-3">
+          <h1 className="entry-title">Pulse</h1>
+          <p className="mx-auto mt-2 max-w-sm text-balance text-sm text-zinc-400 sm:text-base">
+            A living globe of anonymous strangers. Drop onto the map and
+            connect.
+          </p>
+        </div>
+
+        <button
+          onClick={enter}
+          disabled={locating}
+          className="entry-cta mt-6"
+          aria-busy={locating}
+        >
+          {locating && <span className="entry-cta-spinner" aria-hidden />}
+          {locating ? "Finding you…" : "Enter Pulse"}
+        </button>
+
+        <p
+          className="mt-3 max-w-xs text-center text-sm text-rose-300 empty:hidden"
+          role="status"
+          aria-live="polite"
+        >
+          {status === "error" ? error : ""}
         </p>
       </div>
 
-      <button
-        onClick={enter}
-        disabled={status === "locating"}
-        className="rounded-full bg-emerald-400 px-8 py-3 font-semibold text-zinc-950 transition hover:bg-emerald-300 disabled:opacity-60"
-      >
-        {status === "locating" ? "Locating…" : "Enter Pulse"}
-      </button>
-
-      {status === "error" && (
-        <p className="max-w-sm text-center text-sm text-red-400">{error}</p>
-      )}
-
-      <p className="max-w-sm text-center text-xs text-zinc-500">
+      <p className="relative mt-8 max-w-sm text-center text-xs leading-relaxed text-zinc-500">
         No sign-up. Your dot is placed 1–3&nbsp;km from your real location.
         Nothing is stored — closing the tab ends everything.
       </p>

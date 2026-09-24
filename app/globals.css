@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #03050c;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,17 +12,338 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* ---------- Entry gate ---------- */
+
+.entry-shell {
+  background:
+    radial-gradient(125% 85% at 50% -10%, #102a55 0%, #070d20 45%, #03050c 100%);
+}
+
+/* Two slow-drifting blobs so the backdrop never looks like a flat gradient. */
+.entry-aurora {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      32% 26% at 22% 28%,
+      rgba(56, 189, 248, 0.18),
+      transparent 70%
+    ),
+    radial-gradient(
+      30% 24% at 78% 68%,
+      rgba(52, 211, 153, 0.14),
+      transparent 70%
+    );
+  filter: blur(40px);
+  animation: entry-drift 24s ease-in-out infinite alternate;
+}
+
+.entry-globe {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* Height-aware so the hero never overflows a short/landscape viewport. This
+     is the globe's visible size; the clip bleeds outside it. */
+  width: clamp(180px, min(60vw, 44vh), 380px);
+  aspect-ratio: 1;
+}
+
+/* `screen` drops the source clip's dark backing square so the globe reads as
+   a light source floating on the page rather than a pasted rectangle. */
+/* Positioned (but z-index auto) so it paints after the glow/ring siblings
+   without creating a stacking context that would isolate the blend.
+   The source clip sits on a dark square: `screen` lifts it out of the page and
+   the round crop removes the corners the blend alone can't hide. */
+/* No crop is needed: the clip's backing is encoded to true black, and `screen`
+   against black is a no-op, so the frame's rectangle is simply invisible. The
+   disc fills the frame edge to edge, so there is no room to fade between the
+   two — any mask would slice the globe or the backing's edge instead. */
+.entry-globe-clip {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.entry-globe-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.entry-globe-still {
+  display: none;
+  background: center / contain no-repeat url("/earth-globe.jpg");
+}
+
+.entry-glow {
+  position: absolute;
+  inset: 6%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(56, 189, 248, 0.42) 0%,
+    rgba(56, 189, 248, 0.12) 55%,
+    transparent 72%
+  );
+  filter: blur(26px);
+  animation: entry-breathe 6s ease-in-out infinite;
+}
+
+.entry-ring {
+  position: absolute;
+  inset: 4%;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  border-radius: 9999px;
+  opacity: 0;
+  animation: entry-pulse 5s ease-out infinite;
+}
+
+.entry-ring--late {
+  animation-delay: 2.5s;
+}
+
+.entry-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  background: rgba(8, 20, 40, 0.6);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a5d8f7;
+  backdrop-filter: blur(8px);
+}
+
+.entry-eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25);
+  animation: entry-blink 2s ease-in-out infinite;
+}
+
+.entry-title {
+  font-size: clamp(2.75rem, 11vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  background: linear-gradient(180deg, #ffffff 25%, #9ec9ef 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.entry-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  /* Picks up the globe's atmosphere cyan so the two read as one composition. */
+  background: linear-gradient(180deg, #7dd3fc, #22a7e0);
+  padding: 0.875rem 2.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #04121f;
+  box-shadow:
+    0 10px 30px -10px rgba(56, 189, 248, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.entry-cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 16px 36px -12px rgba(56, 189, 248, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.entry-cta:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.entry-cta:disabled {
+  cursor: default;
+  filter: saturate(0.7);
+  opacity: 0.75;
+}
+
+.entry-cta-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(4, 18, 31, 0.25);
+  border-top-color: #04121f;
+  border-radius: 9999px;
+  animation: entry-spin 0.7s linear infinite;
+}
+
+/* ---------- Connection handshake ---------- */
+
+.meet-art {
+  position: relative;
+  display: block;
+  height: 132px;
+  overflow: hidden;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.meet-art-image {
+  position: absolute;
+  inset: 0;
+  /* Framed just below centre so the figures and moon fill the band and the
+     grass at the foot of the illustration stays out of it. */
+  background: center 36% / cover no-repeat url("/moonlit-pair.avif");
+  /* Pulls the stock violet toward the app's indigo/cyan and takes the edge off
+     the saturation so it sits with the rest of the UI. */
+  filter: hue-rotate(-24deg) saturate(0.6) brightness(0.82) contrast(1.06);
+}
+
+/* Fades the art into the card body instead of ending on a hard seam. */
+.meet-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 12, 24, 0.1) 0%,
+    rgba(12, 16, 30, 0.45) 55%,
+    #18181b 100%
+  );
+}
+
+/* Breathing moonlight while a request is in flight. Sits above the fade (an
+   ::after, which would otherwise paint over it) and is centred between the two
+   figures. A soft glow rather than a ring, so it can't be mistaken for an
+   artefact drawn on top of the illustration. */
+.meet-art-signal {
+  position: absolute;
+  z-index: 1;
+  top: 48%;
+  left: 50%;
+  width: 70%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(125, 211, 252, 0.3) 0%,
+    rgba(125, 211, 252, 0.08) 45%,
+    transparent 68%
+  );
+  animation: meet-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes meet-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meet-art-signal {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+@keyframes entry-drift {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}
+
+@keyframes entry-breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes entry-pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.92);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes entry-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes entry-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entry-aurora,
+  .entry-glow,
+  .entry-ring,
+  .entry-eyebrow::before {
+    animation: none;
+  }
+
+  .entry-ring {
+    opacity: 0.35;
+  }
+
+  video.entry-globe-media {
+    display: none;
+  }
+
+  .entry-globe-still {
+    display: block;
+  }
 }
 
 /* Live user dots on the map */

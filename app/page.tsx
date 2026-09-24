@@ -5,6 +5,7 @@ import EntryGate from "./components/EntryGate";
 import WorldMap from "./components/WorldMap";
 import ConnectionPrompt from "./components/ConnectionPrompt";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
+import MeetingArt from "./components/MeetingArt";
 import VideoPanel from "./components/VideoPanel";
 import { join, leave, poll, sendSignal } from "@/lib/api";
 import { PeerSession, type DescType, type PeerControl } from "@/lib/webrtc";
@@ -52,7 +53,9 @@ export default function Home() {
   const msgId = useRef(0);
   const requestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const myLocationRef = useRef(myLocation);
-  myLocationRef.current = myLocation;
+  useEffect(() => {
+    myLocationRef.current = myLocation;
+  }, [myLocation]);
 
   function showNotice(text: string) {
     setNotice(text);
@@ -351,22 +354,32 @@ export default function Home() {
       )}
 
       {conn.kind === "requesting" && (
-        <div className="absolute left-1/2 top-20 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full bg-zinc-800/90 px-4 py-2 text-sm text-zinc-100 shadow-lg backdrop-blur">
-          <span>Requesting connection…</span>
-          <button
-            onClick={cancelRequest}
-            className="rounded-full bg-zinc-700 px-3 py-1 text-xs hover:bg-zinc-600"
-          >
-            Cancel
-          </button>
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-xs overflow-hidden rounded-2xl bg-zinc-900 text-center text-zinc-100 shadow-2xl ring-1 ring-white/10">
+            <MeetingArt pulsing />
+            <div className="-mt-2 px-6 pb-6">
+              <h2 className="text-lg font-semibold">Reaching out…</h2>
+              <p className="mt-1 text-sm text-zinc-400">
+                Waiting for a stranger to accept.
+              </p>
+              <button
+                onClick={cancelRequest}
+                className="mt-5 w-full rounded-full border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:border-zinc-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       {conn.kind === "incoming" && (
         <ConnectionPrompt
           title="A stranger wants to connect"
+          subtitle="Say yes to open a private chat."
           acceptLabel="Accept"
           declineLabel="Decline"
+          art
           onAccept={acceptIncoming}
           onDecline={declineIncoming}
         />
