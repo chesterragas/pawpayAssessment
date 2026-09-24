@@ -6,11 +6,12 @@ export async function join(
   lat: number,
   lng: number,
 ): Promise<void> {
-  await fetch("/api/join", {
+  const res = await fetch("/api/join", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id, lat, lng }),
   });
+  if (!res.ok) throw new Error(`join failed: ${res.status}`);
 }
 
 export async function poll(id: string): Promise<PollResponse> {
@@ -31,6 +32,7 @@ export async function sendSignal(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ fromId, toId, type, payload }),
+    keepalive: true,
   });
 }
 

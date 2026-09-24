@@ -22,8 +22,10 @@ export async function POST(request: NextRequest) {
 
   // Independent cleanup deletes — no atomicity needed (and interactive
   // transactions are unreliable over a PgBouncer pooler).
+  // Keep outbound mailbox rows (fromId) so a tab-close `end` can still
+  // reach the other peer.
   await prisma.signal.deleteMany({
-    where: { OR: [{ toId: id }, { fromId: id }] },
+    where: { toId: id },
   });
   await prisma.presence.deleteMany({ where: { id } });
 
